@@ -226,3 +226,146 @@ model = logit('target ~ age + income', data=df).fit()
 # 2. 결과 요약 (P>|z| 컬럼의 p-value 확인)
 print(model.summary())
 ```
+
+네, 빅데이터분석기사 실기 시험(특히 2, 3유형)에서 자주 쓰는 `import` 구문과 함수 반환값(`stat, p_val ...`)을 암기하기 쉽게 총정리했습니다.
+
+이것만 외워두시면 코딩 시간을 획기적으로 줄일 수 있습니다.
+
+-----
+
+## 📦 1. `import` 총정리 (유형별 암기)
+
+### 1\. 기본 (1, 2, 3유형 공통)
+
+데이터를 불러오고, 다루고, 계산하는 데 필수입니다.
+
+```python
+# 판다스 (데이터프레임 핸들링)
+import pandas as pd
+
+# 넘파이 (수학 계산, 배열)
+import numpy as np
+```
+
+### 2\. 머신러닝 (2유형 - 모델링)
+
+`sklearn` (Scikit-Learn)이 핵심입니다.
+
+```python
+# 1. 데이터 분리 (필수)
+from sklearn.model_selection import train_test_split
+
+# 2. 전처리 (인코딩)
+from sklearn.preprocessing import LabelEncoder # (예: 'male' -> 0)
+from sklearn.preprocessing import StandardScaler # (숫자 스케일링)
+from sklearn.preprocessing import MinMaxScaler # (숫자 스케일링)
+
+# 3. 모델 선택 (2개만 외워도 충분)
+from sklearn.ensemble import RandomForestClassifier # (분류 - 성능 좋음)
+from sklearn.linear_model import LogisticRegression # (분류 - 기본)
+# from sklearn.ensemble import RandomForestRegressor # (회귀 - 숫자 예측)
+# from sklearn.linear_model import LinearRegression # (회귀 - 기본)
+
+# 4. 평가지표 (문제에서 요구하는 것)
+from sklearn.metrics import accuracy_score # (정확도)
+from sklearn.metrics import f1_score # (F1 스코어)
+from sklearn.metrics import roc_auc_score # (ROC AUC)
+# from sklearn.metrics import mean_squared_error # (MSE - 회귀)
+```
+
+### 3\. 통계 검정 (3유형 - 가설 검정)
+
+`scipy.stats`와 `statsmodels`가 핵심입니다.
+
+```python
+# 1. Scipy (단일 함수들)
+from scipy import stats
+# (여기에 ttest_ind, f_oneway, levene, chi2_contingency, 
+#  chisquare, pearsonr, shapiro 등이 모두 들어있음)
+
+# 2. Statsmodels (회귀분석, ANOVA 상세 분석)
+import statsmodels.api as sm # (GLM 등에서 family 지정 시 필요)
+from statsmodels.formula.api import ols, logit, glm # (회귀식)
+from statsmodels.stats.anova import anova_lm # (분산분석표)
+from statsmodels.stats.multicomp import pairwise_tukeyhsd # (투키 사후검정)
+from statsmodels.stats.proportion import proportions_ztest # (비율 검정)
+```
+
+-----
+
+## 🐍 2. 함수 반환값 총정리 (stat, p\_val...)
+
+`scipy.stats`의 많은 함수는 결과를 \*\*튜플(tuple)\*\*로 반환합니다. 이 값들을 순서대로 받아오는 것입니다.
+
+### 1\. (통계량, p값) 2개를 반환하는 함수들
+
+가장 일반적인 형태입니다. **거의 모든 검정**이 이 형식을 따릅니다.
+
+  * `statistic`: 검정통계량 (t-값, F-값, $\chi^2$-값, 상관계수 r 등)
+  * `pvalue`: p-값
+
+<!-- end list -->
+
+```python
+# 템플릿: stat, p_val = function(...)
+
+# 1. t-검정 (3종 세트)
+stat, p_val = stats.ttest_1samp(sample, popmean=0)
+stat, p_val = stats.ttest_ind(group1, group2, equal_var=True)
+stat, p_val = stats.ttest_rel(before, after)
+
+# 2. ANOVA (scipy 방식)
+stat, p_val = stats.f_oneway(group1, group2, group3)
+
+# 3. 정규성 검정 (Shapiro-Wilk)
+stat, p_val = stats.shapiro(data)
+
+# 4. 상관분석 (Pearson)
+# (주의: 첫 번째 stat이 '상관계수 r'임)
+corr, p_val = stats.pearsonr(x, y)
+
+# 5. 적합도 검정 (Chisquare)
+stat, p_val = stats.chisquare(f_obs=[...], f_exp=[...])
+
+# 6. 등분산 검정 (Levene)
+stat, p_val = stats.levene(group1, group2)
+
+# 7. 비율 검정 (Statsmodels)
+stat, p_val = proportions_ztest(count=[...], nobs=[...])
+```
+
+### 2\. (통계량, p값, 자유도, 기대빈도) 4개를 반환하는 함수
+
+**`chi2_contingency` (카이제곱 독립성 검정)가 유일**합니다. 이것만 따로 외우세요.
+
+```python
+# 템플릿: chi2, p_val, dof, expected = stats.chi2_contingency(crosstab)
+
+# 1. 교차표 생성
+ct = pd.crosstab(df['Var1'], df['Var2'])
+
+# 2. 검정 수행
+chi2_stat, p_val, dof, expected = stats.chi2_contingency(ct)
+```
+
+  * `chi2_stat`: 카이제곱 통계량
+  * `p_val`: p-값
+  * `dof`: 자유도 (Degrees of Freedom)
+  * `expected`: 기대빈도표 (Numpy 배열)
+
+### 3\. (기타) 테이블/객체를 반환하는 함수들
+
+`stat, p_val` 형식이 아닌 함수들입니다.
+
+```python
+# 1. ANOVA (Statsmodels 방식)
+# 'DataFrame'을 반환
+model = ols('y ~ C(X)', data=df).fit()
+anova_table = anova_lm(model)
+# print(anova_table) # -> PR(>F) 컬럼이 p-value
+
+# 2. Tukey 사후검정
+# 'TukeyHSDResult'라는 전용 객체(표)를 반환
+tukey_result = pairwise_tukeyhsd(endog=df['value'], groups=df['group'])
+# print(tukey_result) # -> p-adj 컬럼이 p-value
+```
