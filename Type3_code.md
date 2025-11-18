@@ -369,3 +369,144 @@ anova_table = anova_lm(model)
 tukey_result = pairwise_tukeyhsd(endog=df['value'], groups=df['group'])
 # print(tukey_result) # -> p-adj 컬럼이 p-value
 ```
+
+로지스틱 회귀분석은 \*\*"결과를 해석하는 능력"\*\*이 3유형의 핵심입니다. 요청하신 내용(Summary 해석, 오즈비, 특정 조건 계산)을 시험 실전용으로 딱 정리해 드릴게요.
+
+-----
+
+## 1\. `model.summary()` 완벽 해부 (시험에 볼 건 딱 2개\!)
+
+`print(model.summary())`를 하면 복잡한 표가 나오지만, 시험에서는 \*\*`coef`\*\*와 \*\*`P>|z|`\*\*만 보면 됩니다.
+
+### ① `coef` (회귀계수, Coefficient)
+
+  * **의미:** 이 변수가 1 증가할 때, \*\*"로그 오즈(Log Odds)"\*\*가 얼마나 변하는지를 나타냅니다.
+  * **해석:**
+      * **양수(+)**: 이 변수가 커지면 성공(Target=1) 확률이 **높아진다.**
+      * **음수(-)**: 이 변수가 커지면 성공(Target=1) 확률이 **낮아진다.**
+  * **주의:** 이 값 자체는 확률이 아닙니다\! \*\*지수함수($e$)를 씌워야 "오즈비"\*\*가 됩니다.
+
+### ② `P>|z|` (p-value, 유의확률)
+
+  * **의미:** 이 변수가 통계적으로 유의미한가?
+  * **기준:** **0.05보다 작아야 유의미**합니다. (0.05보다 크면 이 변수는 결과에 영향을 주지 않는다고 봅니다.)
+
+-----
+
+## 2\. 오즈비 (Odds Ratio)란?
+
+시험 문제의 단골 손님입니다.
+
+  * **오즈(Odds):** $\frac{\text{성공 확률}}{\text{실패 확률}}$
+  * **오즈비(Odds Ratio):** 변수가 1 증가할 때 **오즈가 몇 배가 되는가?**
+  * **공식:** $\text{Odds Ratio} = e^{\text{coef}} = \exp(\text{coef})$
+
+> **시험 꿀팁:** 문제에서 "오즈비를 구하시오"라고 하면 무조건 \*\*`np.exp(회귀계수)`\*\*를 계산하면 됩니다.
+
+-----
+
+## 3\. 실전 문제 유형별 해결법 (코드 포함)
+
+가상의 데이터를 만들어서 바로 보여드릴게요.
+
+### 📊 데이터 준비
+
+```python
+import pandas as pd
+import numpy as np
+from statsmodels.formula.api import logit
+
+# 가상 데이터 생성
+df = pd.DataFrame({
+    'Churn': [1, 0, 1, 0, 1, 0, 0, 1, 1, 0], # 1: 이탈, 0: 유지
+    'PlanType': [1, 0, 1, 0, 1, 0, 0, 1, 0, 0], # 1: 고급요금제, 0: 일반
+    'Age': [50, 20, 45, 22, 55, 25, 30, 48, 52, 28]
+})
+
+# 모델 학습
+model = logit('Churn ~ PlanType + Age', data=df).fit()
+# print(model.summary())
+```
+
+### ❓ 문제 유형 A: "PlanType이 1인 고객이 0인 고객보다 이탈할 오즈비를 구하시오."
+
+이 말은 \*\*"PlanType 변수의 오즈비를 구하라"\*\*는 말과 100% 똑같습니다.
+(왜냐하면 회귀계수는 변수가 \*\*'1단위 증가할 때'\*\*의 변화량이기 때문입니다. 0에서 1이 되는 것도 1단위 증가죠.)
+
+**풀이 코드:**
+
+```python
+# 1. PlanType의 회귀계수(coef) 추출
+coef_plan = model.params['PlanType']
+
+# 2. 지수함수(exp)를 씌워 오즈비 계산
+odds_ratio = np.exp(coef_plan)
+
+print(f"PlanType의 오즈비: {round(odds_ratio, 4)}")
+```
+
+  * **해석:** 만약 답이 **2.5**라면? -\> "PlanType 1인 사람은 0인 사람보다 이탈할 확률(오즈)이 **2.5배 높다**."
+
+-----
+
+### ❓ 문제 유형 B: "이탈 확률이 0.3 이상인 고객 수를 구하시오."
+
+`statsmodels`의 로지스틱 회귀 모델에서 `predict()`를 쓰면 \*\*자동으로 확률(0\~1 사이 값)\*\*이 나옵니다. (sklearn과 다름\!)
+
+**풀이 코드:**
+
+```python
+# 1. 이탈 확률 예측 (0.82, 0.11, ... 이런 식으로 나옴)
+pred_probs = model.predict(df) 
+
+# 2. 조건 필터링 (0.3 이상)
+target_customers = pred_probs[pred_probs >= 0.3]
+
+# 3. 개수 세기 (len 사용)
+count = len(target_customers)
+
+print(f"확률 0.3 이상인 고객 수: {count}명")
+```
+
+-----
+
+### ❓ 문제 유형 C: "Age가 10살 증가할 때의 오즈비를 구하시오."
+
+가끔 이렇게 \*\*"1단위가 아니라 n단위 증가할 때"\*\*를 묻기도 합니다.
+
+  * 1살 증가 오즈비 = $\exp(\text{coef})$
+  * 10살 증가 오즈비 = $\exp(\text{coef} \times 10)$
+
+**풀이 코드:**
+
+```python
+coef_age = model.params['Age']
+odds_ratio_10 = np.exp(coef_age * 10) # 계수에 10을 곱하고 exp
+
+print(f"나이 10살 증가 시 오즈비: {round(odds_ratio_10, 4)}")
+```
+
+-----
+
+## 📝 시험장용 치트시트 (복사해서 외우세요\!)
+
+```python
+import numpy as np
+from statsmodels.formula.api import logit
+
+# 1. 모델 생성 및 학습
+model = logit('Target ~ var1 + var2', data=df).fit()
+
+# 2. 회귀계수 확인 (coef)
+print(model.params['var1'])
+
+# 3. 오즈비(Odds Ratio) 계산 (문제: var1의 오즈비는?)
+# 공식: exp(coef)
+or_val = np.exp(model.params['var1'])
+
+# 4. 확률 예측 및 개수 세기 (문제: 확률 0.5 이상인 개수는?)
+probs = model.predict(df)
+count = sum(probs >= 0.5) # 또는 len(probs[probs >= 0.5])
+```
+
+이것만 알면 3유형 로지스틱 회귀 문제는 다 풀 수 있습니다\!
