@@ -842,3 +842,54 @@ print(dir(result))
 
 1.  **3유형(통계):** `params`(계수), `pvalues`(p값), `rsquared`(R2) 무조건 암기.
 2.  **2유형(ML):** `feature_importances_`(중요도) 정도만 알면 됨. (나머지는 `predict`만 잘하면 됨)
+
+\*\*"유의하지 않다"\*\*는 통계적으로 \*\*"p-value가 0.05보다 크다(\> 0.05)"\*\*는 뜻입니다.
+(귀무가설을 기각할 수 없음 = 우연일 수 있음 = 영향력이 확실하지 않음)
+
+`statsmodels`에서 이를 찾아내는 방법은 **`model.pvalues`** 속성을 이용하는 것입니다. 시험에 자주 나오는 패턴 2가지로 정리해 드릴게요.
+
+-----
+
+### 1\. 유의하지 않은 변수의 "개수" 구하기
+
+시험 문제: *"유의수준 0.05 하에서 유의하지 않은 설명변수의 개수를 구하시오. (단, 절편항은 제외)"*
+
+```python
+# 1. 모델 학습
+model = ols('y ~ x1 + x2 + x3', data=df).fit()
+
+# 2. 모든 변수의 p-value 확인
+# print(model.pvalues)
+
+# 3. [핵심] p-value가 0.05보다 큰 것만 필터링 (True=1, False=0)
+# Intercept(절편)는 보통 설명변수 개수에서 빼므로 [1:]로 슬라이싱합니다.
+target_vars = model.pvalues[1:] # 0번 인덱스는 Intercept
+cnt = sum(target_vars > 0.05)
+
+print(cnt)
+```
+
+### 2\. 유의하지 않은 변수의 "이름" 찾기
+
+시험 문제: *"가장 유의하지 않은(p-값이 가장 큰) 변수의 이름을 적으시오."*
+
+```python
+# 1. 설명변수(절편 제외)의 p-value만 추출
+vars_p = model.pvalues[1:]
+
+# 2. p-값이 0.05보다 큰 변수들의 이름 출력
+not_signif = vars_p[vars_p > 0.05].index
+print("유의하지 않은 변수들:", list(not_signif))
+
+# 3. 가장 p-값이 큰(가장 쓸모없는) 변수 하나 찾기
+worst_var = vars_p.idxmax()
+print("가장 유의하지 않은 변수:", worst_var)
+```
+
+-----
+
+### ⚡️ 요약 (시험장용)
+
+1.  \*\*`model.pvalues`\*\*를 쓴다.
+2.  **`> 0.05`** 조건이 "유의하지 않은" 것이다.
+3.  \*\*`model.pvalues[1:]`\*\*를 해서 \*\*Intercept(절편)\*\*를 빼는 것을 잊지 않는다. (문제에서 "절편 포함"이라 하면 그냥 씀)
