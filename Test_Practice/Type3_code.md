@@ -703,3 +703,70 @@ print(table.loc['Residual', 'sum_sq'])
 ```
 
 **팁:** `print(table)`을 먼저 해서 표의 행/열 이름을 눈으로 확인하고, `loc`을 사용하면 실수를 줄일 수 있습니다.
+
+시험 준비를 위해 `statsmodels` 라이브러리를 활용한 선형회귀(OLS)와 로지스틱 회귀(Logit) 핵심 코드를 먼저 정리해 드리겠습니다. 그 후, 해당 개념을 확인하는 연습 문제를 풀어보세요.
+
+### 📚 시험 대비: statsmodels 핵심 코드 정리
+
+빅데이터 분석기사 실기 등 파이썬 기반 통계 분석 시험에서는 `statsmodels.formula.api`를 사용하는 것이 수식을 직관적으로 작성할 수 있어 유리합니다.
+
+#### 1\. 라이브러리 임포트
+
+```python
+import numpy as np
+import pandas as pd
+from statsmodels.formula.api import ols, logit
+```
+
+#### 2\. 다중 선형 회귀 (OLS: Ordinary Least Squares)
+
+연속형 종속변수($Y$)를 예측할 때 사용합니다.
+
+```python
+# 모델 정의 및 학습 (Formula: '종속변수 ~ 독립변수1 + 독립변수2')
+# data: 데이터프레임 이름
+model = ols('target ~ feature1 + feature2', data=df).fit()
+
+# 결과 요약 (회귀계수, p-value, R-squared 확인)
+print(model.summary())
+
+# 회귀계수만 확인
+print(model.params)
+
+# 예측 (테스트 데이터)
+pred = model.predict(test_df)
+```
+
+✅ 제3유형 (통계): 무조건 ols 쓰세요! (sm.OLS X)
+시험 문제에서 "회귀계수의 p-value를 구하시오" 또는 **"유의하지 않은 변수를 찾으시오"**라고 묻습니다.
+
+#### 3\. 로지스틱 회귀 (Logit)
+
+이진 분류(0 또는 1) 종속변수($Y$)를 예측할 때 사용합니다.
+
+```python
+# 모델 정의 및 학습
+model = logit('target ~ feature1 + feature2', data=df).fit()
+
+# 결과 요약 (Pseudo R-squared, Log-Likelihood 확인)
+print(model.summary())
+
+# ★ 중요: 오즈비(Odds Ratio) 구하기
+# model.params는 '로그 오즈(Log-Odds)' 값이므로지수함수(exp)를 취해야 오즈비가 됨
+odds_ratios = np.exp(model.params)
+print(odds_ratios)
+
+# 예측 (결과는 0~1 사이의 확률값으로 반환됨)
+pred_prob = model.predict(test_df)
+
+# 확률을 0/1 클래스로 변환 (임계값 0.5 기준)
+pred_class = np.where(pred_prob > 0.5, 1, 0)
+```
+
+-----
+
+그럼 이제 학습한 내용을 바탕으로 실전 감각을 익혀볼까요?
+
+선형회귀와 로지스틱 회귀의 개념, 코드 사용법, 결과 해석에 대한 퀴즈입니다.
+
+http://googleusercontent.com/immersive_entry_chip/0
