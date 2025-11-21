@@ -18,3 +18,5 @@ df['Category'] = df['Price'].apply(get_category)
 df_time['Sales_fill'] = df_time['Sales'].interpolate(method='linear')
 
 fill_nan = df.groupby('City')['Price'].transform('median')
+
+윌콕슨 검정
