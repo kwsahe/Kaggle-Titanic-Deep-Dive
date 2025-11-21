@@ -8,3 +8,13 @@ def cond(traffic):
     if traffic >= var: return 'Traffic_High'
     else: return 'NoNan'
 df['Traffic_check'] = df['Traffic'].apply(cond)
+
+def get_category(price):
+    if price < 4000: return 'Low'
+    elif price < 7000: return 'Mid'
+    else: return 'High'
+df['Category'] = df['Price'].apply(get_category)
+
+df_time['Sales_fill'] = df_time['Sales'].interpolate(method='linear')
+
+fill_nan = df.groupby('City')['Price'].transform('median')
