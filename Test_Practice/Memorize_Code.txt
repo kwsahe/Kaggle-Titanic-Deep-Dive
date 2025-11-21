@@ -2,3 +2,9 @@ pred_proba = model.predict_proba(X_val)[:, 1]
 roc = roc_auc_score(y_val, pred_proba)
 
 residual = 잔차
+
+var = df['Traffic'].quantile(0.99)
+def cond(traffic):
+    if traffic >= var: return 'Traffic_High'
+    else: return 'NoNan'
+df['Traffic_check'] = df['Traffic'].apply(cond)
