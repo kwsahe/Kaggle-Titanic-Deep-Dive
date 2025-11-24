@@ -520,6 +520,15 @@ count = sum(probs >= 0.5) # 또는 len(probs[probs >= 0.5])
 
 ---
 
+```python
+from statsmodels.formula.api import logit
+model = logit('Success ~ Age + BMI + Group', data=df).fit()
+coef = model.params['Group[T.Treatment]']
+# 설명 (자동 더미 변수화 - 문자열)
+odds_ratio = np.exp(coef)
+print(round(odds_ratio, 3))
+```
+
 ### 1. 왜 이런 이름이 생겼나요? (자동 더미 변수화)
 
 우리가 가진 데이터 `df['Group']`에는 **'Control'**과 **'Treatment'**라는 두 가지 문자열이 들어있습니다.
