@@ -281,7 +281,7 @@ from sklearn.metrics import roc_auc_score # (ROC AUC)
 # 1. Scipy (단일 함수들)
 from scipy import stats
 # (여기에 ttest_ind, f_oneway, levene, chi2_contingency, 
-#  chisquare, pearsonr, shapiro 등이 모두 들어있음)
+#  chisquare, pearsonr, shapiro, wilcoxon 등이 모두 들어있음)
 
 # 2. Statsmodels (회귀분석, ANOVA 상세 분석)
 import statsmodels.api as sm # (GLM 등에서 family 지정 시 필요)
@@ -332,6 +332,9 @@ stat, p_val = stats.levene(group1, group2)
 
 # 7. 비율 검정 (Statsmodels)
 stat, p_val = proportions_ztest(count=[...], nobs=[...])
+
+# 8. 부호 검정 (wilcoxon)
+stat, p_val = wilcoxon(pre, post, alternative='two-sided' or 'greater' or 'less')
 ```
 
 ### 2\. (통계량, p값, 자유도, 기대빈도) 4개를 반환하는 함수
