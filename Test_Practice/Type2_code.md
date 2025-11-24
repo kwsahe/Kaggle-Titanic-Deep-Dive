@@ -229,3 +229,63 @@ X_submit = combined_encoded.iloc[len(X):]
 > **"원-핫 인코딩(`get_dummies`)을 할 때는 무조건 '합치고 ➡️ 바꾸고 ➡️ 나눈다'\!"**
 
 이 3단계만 지키면 인코딩 관련 에러는 절대 나지 않습니다. 아주 훌륭한 코드 패턴입니다\!
+
+# **📌 주요 차이점 요약(랜덤포레스트)**
+| 항목              | 분류 (`RandomForestClassifier`) | 회귀 (`RandomForestRegressor`) |
+| --------------- | ----------------------------- | ---------------------------- |
+| 대상 값            | 범주형 (0,1,2 등)                 | 연속형 (실수값)                    |
+| 평가 지표           | F1-score, Accuracy            | RMSE, MAE, R²                |
+| `.predict()` 결과 | 정수 class                      | 실수값 예측                       |
+
+# ***정석 코드***
+
+```python
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
+import numpy as np
+
+# 데이터 불러오기
+train = pd.read_csv('6_2_train.csv')
+test = pd.read_csv('6_2_test.csv')
+
+# 결측치 처리
+train['Gender'] = train['Gender'].fillna(train['Gender'].mode()[0])
+test['Gender'] = test['Gender'].fillna(train['Gender'].mode()[0])
+
+# 데이터 분리
+X = train.drop(columns=['ID', 'DBP'])
+y = train['DBP']
+X_test = test.drop(columns=['ID'])
+
+# 인코딩
+X = pd.get_dummies(X, columns=['Gender'])
+X_test = pd.get_dummies(X_test, columns=['Gender'])
+X_test = X_test.reindex(columns=X.columns, fill_value=0)
+
+# 스플릿 분리
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=0)
+
+# 모델 학습 및 검증
+model = RandomForestRegressor(random_state=0)
+model.fit(X_train, y_train)
+val_pred = model.predict(X_val)
+
+# RMSE 평가
+rmse = np.sqrt(mean_squared_error(y_val, val_pred))
+print("검증 RMSE:", round(rmse, 4))
+
+
+# 전체 데이터로 재학습 후 예측
+model.fit(X, y)
+final_pred = model.predict(X_test)
+
+# 결과 저장
+result = pd.DataFrame({
+    'ID': test['ID'],
+    'pred': final_pred
+})
+result.to_csv('result.csv', index=False)
+print(result.head())
+```
