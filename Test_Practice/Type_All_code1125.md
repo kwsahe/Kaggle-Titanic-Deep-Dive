@@ -251,3 +251,94 @@ print(df.index)
       * `best_city = df.groupby(...).sum().idxmax()`
 
 이것만 기억하면 데이터 추출 문제는 완벽합니다\!
+
+빅데이터 분석기사 실기 시험에서 가장 헷갈리기 쉬운 **카이제곱 검정 2종류**와 **분류 모델 평가지표**를 시험장용으로 딱 정리해 드립니다.
+
+-----
+
+# 1\. 🔲 카이제곱 검정 (제3유형 - 통계)
+
+두 함수는 이름이 비슷하지만 **용도가 완전히 다릅니다.**
+
+### ① `chi2_contingency` (독립성 검정)
+
+  * **목적:** "두 범주형 변수(A, B)가 서로 **관련이 있는지(독립인지)**" 확인할 때.
+  * **입력:** **교차표 (Crosstab)** (2x2, 3x2 등 표 형태)
+  * **예시:** "성별(남/여)에 따라 생존 여부(생존/사망)가 다른가?"
+
+<!-- end list -->
+
+```python
+from scipy import stats
+import pandas as pd
+
+# 1. 교차표 만들기 (필수!)
+ct = pd.crosstab(df['성별'], df['생존여부'])
+
+# 2. 검정 수행 (반환값 4개 순서 암기: 통계량, p값, 자유도, 기대빈도)
+chi2, p_val, dof, expected = stats.chi2_contingency(ct)
+
+print(round(p_val, 4))
+```
+
+### ② `chisquare` (적합도 검정)
+
+  * **목적:** "한 변수의 데이터 분포가 \*\*특정 비율(가설)\*\*과 일치하는지" 확인할 때.
+  * **입력:** **관측 빈도 리스트**(`f_obs`)와 **기대 빈도 리스트**(`f_exp`)
+  * **예시:** "주사위를 던졌는데 1\~6이 모두 1/6 확률로 나왔는가?", "성비가 남:여 = 6:4가 맞는가?"
+
+<!-- end list -->
+
+```python
+from scipy import stats
+
+# 1. 관측 빈도 (실제 데이터 개수)
+f_obs = [60, 40] # 남자 60명, 여자 40명
+
+# 2. 기대 빈도 (가설에 따른 개수 - 예: 50:50이라면)
+f_exp = [50, 50]
+
+# 3. 검정 수행 (반환값 2개)
+stat, p_val = stats.chisquare(f_obs, f_exp)
+
+print(round(p_val, 4))
+```
+
+-----
+
+# 2\. 🎯 모델 평가 (제2, 3유형 - 머신러닝)
+
+### ③ `accuracy_score` (정확도)
+
+  * **목적:** "분류 모델이 **얼마나 정답을 잘 맞췄는지**" (전체 중 맞은 비율)
+  * **입력:** \*\*실제 정답값(`y_true`)\*\*과 **예측된 클래스값(`y_pred`)**
+      * ⚠️ **주의:** 확률(`predict_proba`)이 아니라 \*\*0, 1 같은 클래스(`predict`)\*\*를 넣어야 합니다\!
+
+<!-- end list -->
+
+```python
+from sklearn.metrics import accuracy_score
+import numpy as np
+
+# 1. 예측값 준비 (predict 사용)
+# 만약 statsmodels라면 predict 결과(확률)를 0/1로 변환해야 함
+pred_class = [1, 0, 1, 1, 0] 
+y_true = [1, 0, 0, 1, 0]
+
+# 2. 정확도 계산
+acc = accuracy_score(y_true, pred_class)
+
+print(round(acc, 2))
+```
+
+-----
+
+### ⚡️ 시험장 요약표 (Cheat Sheet)
+
+| 함수 이름 | 라이브러리 | 용도 | 입력값 형태 | 반환값 (핵심) |
+| :--- | :--- | :--- | :--- | :--- |
+| **`chi2_contingency`** | `scipy.stats` | **독립성** (변수 2개 관계) | **`pd.crosstab` (표)** | `stat`, **`p_val`**, ... |
+| **`chisquare`** | `scipy.stats` | **적합도** (비율 맞는지) | **`[관측]`, `[기대]` (리스트)** | `stat`, **`p_val`** |
+| **`accuracy_score`** | `sklearn.metrics` | **정확도** (채점) | **`정답`, `예측값(0/1)`** | **`점수(0~1)`** |
+
+이 표만 기억하면 헷갈리지 않고 바로 코드를 작성하실 수 있습니다\!
