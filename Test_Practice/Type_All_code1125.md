@@ -342,3 +342,25 @@ print(round(acc, 2))
 | **`accuracy_score`** | `sklearn.metrics` | **정확도** (채점) | **`정답`, `예측값(0/1)`** | **`점수(0~1)`** |
 
 이 표만 기억하면 헷갈리지 않고 바로 코드를 작성하실 수 있습니다\!
+
+```python
+# chisquare 시험용 예시
+from scipy.stats import chisquare
+#print(train['Seat_Class'].unique())
+count_eco = len(train[train['Seat_Class']=='Economy'])
+count_bis = len(train[train['Seat_Class']=='Business'])
+
+f_obs = [count_eco, count_bis]
+total = len(train)
+f_exp = [total*0.7, total*0.3]
+
+stat, p_val = chisquare(f_obs=f_obs, f_exp=f_exp)
+print(round(stat, 3))
+
+# accuracy 시험용 예시
+from sklearn.metrics import accuracy_score
+pred_proba = model.predict(test)
+pred_class = np.where(pred_proba > 0.5, 1, 0)
+accuracy = accuracy_score(test['Satisfied'], pred_class)
+print(round(accuracy, 2))
+```
